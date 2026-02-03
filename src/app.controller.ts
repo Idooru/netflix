@@ -20,16 +20,10 @@ export class AppController {
     return this.appService.getManyMovies(title);
   }
 
-  // @Get(':id')
-  // getMovie(@Param('id') id: string) {
-  //   const movie = this.movies.find((movie) => movie.id === +id);
-
-  //   if (!movie) {
-  //     throw new NotFoundException('존재하지 않는 ID 값의 영화입니다!');
-  //   }
-
-  //   return movie;
-  // }
+  @Get(':id')
+  getMovie(@Param('id') id: string) {
+    return this.appService.getMovieById(+id);
+  }
 
   // @Post()
   // postMovie(@Body('title') title: string) {
