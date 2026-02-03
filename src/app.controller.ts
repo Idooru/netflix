@@ -73,7 +73,14 @@ export class AppController {
   }
 
   @Delete(':id')
-  deleteMovie() {
-    return 3;
+  deleteMovie(@Param('id') id: string) {
+    const movie = this.movies.find((movie) => movie.id === +id);
+
+    if (!movie) {
+      throw new NotFoundException('존재하지 않는 ID 값의 영화입니다!');
+    }
+
+    this.movies = this.movies.filter((movie) => movie.id !== parseInt(id));
+    return id;
   }
 }
