@@ -34,4 +34,13 @@ export class AppService {
     }
     return movie;
   }
+
+  createMovie(title: string) {
+    const movie: Movie = {
+      id: this.idCounter++,
+      title,
+    };
+    this.movies = [...this.movies, movie];
+    return movie;
+  }
 }

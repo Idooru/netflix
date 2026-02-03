@@ -25,17 +25,10 @@ export class AppController {
     return this.appService.getMovieById(+id);
   }
 
-  // @Post()
-  // postMovie(@Body('title') title: string) {
-  //   const movie: Movie = {
-  //     id: this.idCounter++,
-  //     title,
-  //   };
-
-  //   this.movies = [...this.movies, movie];
-
-  //   return movie;
-  // }
+  @Post()
+  postMovie(@Body('title') title: string) {
+    return this.appService.createMovie(title);
+  }
 
   // @Patch(':id')
   // patchMovie(@Param('id') id: string, @Body('title') title: string) {
