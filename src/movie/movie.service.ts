@@ -1,26 +1,64 @@
-import { Injectable } from '@nestjs/common';
-import { CreateMovieDto } from './dto/create-movie.dto';
-import { UpdateMovieDto } from './dto/update-movie.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+
+export interface Movie {
+  id: number;
+  title: string;
+}
 
 @Injectable()
 export class MovieService {
-  create(createMovieDto: CreateMovieDto) {
-    return 'This action adds a new movie';
+  private movies: Movie[] = [
+    {
+      id: 1,
+      title: '해리포터',
+    },
+    {
+      id: 2,
+      title: '반지의제왕',
+    },
+  ];
+  private idCounter = 3;
+
+  getManyMovies(title?: string) {
+    if (!title) {
+      return this.movies;
+    }
+
+    return this.movies.filter((movie) => movie.title.startsWith(title));
   }
 
-  findAll() {
-    return `This action returns all movie`;
+  getMovieById(id: number) {
+    const movie = this.movies.find((movie) => movie.id === +id);
+    if (!movie) {
+      throw new NotFoundException('존재하지 않는 ID 값의 영화입니다!');
+    }
+    return movie;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} movie`;
+  createMovie(title: string) {
+    const movie: Movie = {
+      id: this.idCounter++,
+      title,
+    };
+    this.movies = [...this.movies, movie];
+    return movie;
   }
 
-  update(id: number, updateMovieDto: UpdateMovieDto) {
-    return `This action updates a #${id} movie`;
+  updateMovie(id: string, title: string) {
+    const movie = this.movies.find((movie) => movie.id === +id);
+    if (!movie) {
+      throw new NotFoundException('존재하지 않는 ID 값의 영화입니다!');
+    }
+    Object.assign(movie, { title });
+    return movie;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} movie`;
+  deleteMovie(id: string) {
+    const movie = this.movies.find((movie) => movie.id === +id);
+    if (!movie) {
+      throw new NotFoundException('존재하지 않는 ID 값의 영화입니다!');
+    }
+    this.movies = this.movies.filter((movie) => movie.id !== parseInt(id));
+    return id;
   }
 }
