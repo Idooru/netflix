@@ -5,6 +5,7 @@ import {
   IsDate,
   IsDateString,
   IsDefined,
+  IsDivisibleBy,
   IsEmpty,
   IsEnum,
   IsIn,
@@ -16,6 +17,8 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  Max,
+  Min,
   NotEquals,
 } from 'class-validator';
 
@@ -47,6 +50,12 @@ export class UpdateMovieDto {
   // test: string;
 
   // @IsEnum(MovieGenre)
-  @IsDateString()
+  // @IsDateString()
+  // @IsDivisibleBy(5)
+  // @IsPositive()
+  // @IsNegative()
+  // @Min(100)
+  // @Min(50)
+  // @Max(100)
   test: string;
 }
