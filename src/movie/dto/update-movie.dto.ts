@@ -151,9 +151,9 @@ export class UpdateMovieDto {
   // @IsUUID()
   // @IsLatLong()
   // test: string;
-  @IsPasswordValid()
-  password: string;
+  // @IsPasswordValid()
+  // password: string;
 
-  @IsEmailValid()
-  email: string;
+  // @IsEmailValid()
+  // email: string;
 }
