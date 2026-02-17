@@ -1,15 +1,20 @@
 import {
+  Contains,
   Equals,
+  IsAlphanumeric,
   IsArray,
   IsBoolean,
+  IsCreditCard,
   IsDate,
   IsDateString,
   IsDefined,
   IsDivisibleBy,
   IsEmpty,
   IsEnum,
+  IsHexColor,
   IsIn,
   IsInt,
+  IsLatLong,
   IsNegative,
   IsNotEmpty,
   IsNotIn,
@@ -17,8 +22,12 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  IsUUID,
   Max,
+  MaxLength,
   Min,
+  MinLength,
+  NotContains,
   NotEquals,
 } from 'class-validator';
 
@@ -57,5 +66,16 @@ export class UpdateMovieDto {
   // @Min(100)
   // @Min(50)
   // @Max(100)
+
+  // @Contains('code')
+  // @NotContains('code')
+  // @IsAlphanumeric()
+  // @IsCreditCard()
+  // @IsHexColor()
+  // @MaxLength(15)
+  // @MinLength(5)
+  // @IsUUID()
+  // @IsLatLong()
+
   test: string;
 }
