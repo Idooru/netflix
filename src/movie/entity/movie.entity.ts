@@ -1,11 +1,8 @@
-import { Exclude, Expose } from 'class-transformer';
+import { Transform } from 'class-transformer';
 
-@Exclude()
 export class Movie {
-  @Expose()
   id: number;
-  @Expose()
   title: string;
-
+  @Transform(({ value }: { value: string }) => value.toUpperCase())
   genre: string;
 }
