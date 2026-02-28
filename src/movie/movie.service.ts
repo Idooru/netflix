@@ -46,6 +46,9 @@ export class MovieService {
     const movie: Movie = {
       id: this.idCounter++,
       ...body,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      version: 0,
     };
     this.movies = [...this.movies, movie];
     return movie;
