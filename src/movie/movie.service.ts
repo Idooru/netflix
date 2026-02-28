@@ -17,7 +17,10 @@ export class MovieService {
     if (!title) {
       return {
         type: 'no title',
-        result: Promise.all([this.repository.find(), this.repository.count()]),
+        result: await Promise.all([
+          this.repository.find(),
+          this.repository.count(),
+        ]),
       };
     }
 
