@@ -15,7 +15,10 @@ export class MovieDetail {
   @Column()
   text: string;
 
-  @OneToOne(() => Movie, (movie) => movie.detail)
+  @OneToOne(() => Movie, (movie) => movie.detail, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   @JoinColumn()
   movie: Movie;
 }
