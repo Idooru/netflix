@@ -15,7 +15,7 @@ export class MovieService {
     private readonly movieDetailRepository: Repository<MovieDetail>,
   ) {}
 
-  async getManyMovies(title?: string) {
+  async findAll(title?: string) {
     //// 나중에 title 필터 기능 추가하기
     if (!title) {
       return {
@@ -36,18 +36,20 @@ export class MovieService {
     };
   }
 
-  async getMovieById(id: number) {
+  async findOne(id: number) {
     const movie = await this.movieRepository.findOne({
       where: { id },
       relations: ['detail'],
     });
+
     if (!movie) {
       throw new NotFoundException('존재하지 않는 ID 값의 영화입니다!');
     }
+
     return movie;
   }
 
-  async createMovie(dto: CreateMovieDto) {
+  async create(dto: CreateMovieDto) {
     const { detail, ...rest } = dto;
 
     const movie = await this.movieRepository.save({
@@ -58,8 +60,8 @@ export class MovieService {
     return movie;
   }
 
-  async updateMovie(id: number, dto: UpdateMovieDto) {
-    const movie = await this.getMovieById(id);
+  async update(id: number, dto: UpdateMovieDto) {
+    const movie = await this.findOne(id);
     const { detail, ...rest } = dto;
 
     await this.movieRepository.update({ id }, rest);
@@ -71,11 +73,11 @@ export class MovieService {
       );
     }
 
-    return this.getMovieById(id);
+    return this.findOne(id);
   }
 
-  async deleteMovie(id: number) {
-    const movie = await this.getMovieById(id);
+  async remove(id: number) {
+    const movie = await this.findOne(id);
 
     await Promise.all([
       this.movieRepository.delete({ id }),
