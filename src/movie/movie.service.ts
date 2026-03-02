@@ -48,25 +48,34 @@ export class MovieService {
   }
 
   async createMovie(dto: CreateMovieDto) {
-    const { title, genre, detail } = dto;
+    const { detail, ...rest } = dto;
 
     const movieDetail = await this.movieDetailRepository.save({
       text: detail,
     });
 
     const movie = await this.movieRepository.save({
-      title,
-      genre,
+      ...rest,
       detail: movieDetail,
     });
 
     return movie;
   }
 
-  async updateMovie(id: number, body: UpdateMovieDto) {
-    await this.getMovieById(id);
-    await this.movieRepository.update({ id }, body);
-    return this.movieRepository.findOne({ where: { id } });
+  async updateMovie(id: number, dto: UpdateMovieDto) {
+    const movie = await this.getMovieById(id);
+    const { detail, ...rest } = dto;
+
+    await this.movieRepository.update({ id }, rest);
+
+    if (detail) {
+      await this.movieDetailRepository.update(
+        { id: movie.detail.id },
+        { text: detail },
+      );
+    }
+
+    return this.getMovieById(id);
   }
 
   async deleteMovie(id: number) {
