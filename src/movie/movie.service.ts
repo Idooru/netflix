@@ -50,13 +50,9 @@ export class MovieService {
   async createMovie(dto: CreateMovieDto) {
     const { detail, ...rest } = dto;
 
-    const movieDetail = await this.movieDetailRepository.save({
-      text: detail,
-    });
-
     const movie = await this.movieRepository.save({
       ...rest,
-      detail: movieDetail,
+      detail: { text: detail },
     });
 
     return movie;

@@ -17,6 +17,6 @@ export class Movie extends BaseTable {
   @Column()
   genre: string;
 
-  @OneToOne(() => MovieDetail, (detail) => detail.movie)
+  @OneToOne(() => MovieDetail, (detail) => detail.movie, { cascade: true })
   detail: MovieDetail;
 }
