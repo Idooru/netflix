@@ -79,8 +79,13 @@ export class MovieService {
   }
 
   async deleteMovie(id: number) {
-    await this.getMovieById(id);
-    await this.movieRepository.delete({ id });
+    const movie = await this.getMovieById(id);
+
+    await Promise.all([
+      this.movieRepository.delete({ id }),
+      this.movieDetailRepository.delete({ id: movie.detail.id }),
+    ]);
+
     return id;
   }
 }
