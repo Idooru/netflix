@@ -21,7 +21,7 @@ export class MovieService {
       return {
         type: 'no title',
         result: await Promise.all([
-          this.movieRepository.find(),
+          this.movieRepository.find({ relations: ['detail'] }),
           this.movieRepository.count(),
         ]),
       };
@@ -30,13 +30,17 @@ export class MovieService {
     return {
       type: 'include title',
       result: await this.movieRepository.findAndCount({
+        relations: ['detail'],
         where: { title: Like(`%${title}%`) },
       }),
     };
   }
 
   async getMovieById(id: number) {
-    const movie = await this.movieRepository.findOne({ where: { id } });
+    const movie = await this.movieRepository.findOne({
+      where: { id },
+      relations: ['detail'],
+    });
     if (!movie) {
       throw new NotFoundException('존재하지 않는 ID 값의 영화입니다!');
     }
