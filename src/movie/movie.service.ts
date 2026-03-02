@@ -4,12 +4,15 @@ import { UpdateMovieDto } from './dto/update-movie.dto';
 import { Movie } from './entity/movie.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
+import { MovieDetail } from './entity/movie-detail.entity';
 
 @Injectable()
 export class MovieService {
   constructor(
     @InjectRepository(Movie)
-    private readonly repository: Repository<Movie>,
+    private readonly movieRepository: Repository<Movie>,
+    @InjectRepository(MovieDetail)
+    private readonly movieDetailRepository: Repository<MovieDetail>,
   ) {}
 
   async getManyMovies(title?: string) {
@@ -18,41 +21,53 @@ export class MovieService {
       return {
         type: 'no title',
         result: await Promise.all([
-          this.repository.find(),
-          this.repository.count(),
+          this.movieRepository.find(),
+          this.movieRepository.count(),
         ]),
       };
     }
 
     return {
       type: 'include title',
-      result: await this.repository.findAndCount({
+      result: await this.movieRepository.findAndCount({
         where: { title: Like(`%${title}%`) },
       }),
     };
   }
 
   async getMovieById(id: number) {
-    const movie = await this.repository.findOne({ where: { id } });
+    const movie = await this.movieRepository.findOne({ where: { id } });
     if (!movie) {
       throw new NotFoundException('존재하지 않는 ID 값의 영화입니다!');
     }
     return movie;
   }
 
-  createMovie(body: CreateMovieDto) {
-    return this.repository.save(body);
+  async createMovie(dto: CreateMovieDto) {
+    const { title, genre, detail } = dto;
+
+    const movieDetail = await this.movieDetailRepository.save({
+      text: detail,
+    });
+
+    const movie = await this.movieRepository.save({
+      title,
+      genre,
+      detail: movieDetail,
+    });
+
+    return movie;
   }
 
   async updateMovie(id: number, body: UpdateMovieDto) {
     await this.getMovieById(id);
-    await this.repository.update({ id }, body);
-    return this.repository.findOne({ where: { id } });
+    await this.movieRepository.update({ id }, body);
+    return this.movieRepository.findOne({ where: { id } });
   }
 
   async deleteMovie(id: number) {
     await this.getMovieById(id);
-    await this.repository.delete({ id });
+    await this.movieRepository.delete({ id });
     return id;
   }
 }

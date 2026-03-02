@@ -6,7 +6,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Movie } from './movie.entity';
-import { BaseTable } from './base-table.entity';
 
 @Entity()
 export class MovieDetail {
@@ -14,7 +13,7 @@ export class MovieDetail {
   id: number;
 
   @Column()
-  detail: string;
+  text: string;
 
   @OneToOne(() => Movie, (movie) => movie.detail)
   @JoinColumn()
