@@ -27,7 +27,7 @@ export class MovieService {
       return {
         type: 'no title',
         result: await Promise.all([
-          this.movieRepository.find({ relations: ['detail', 'director'] }),
+          this.movieRepository.find({ relations: ['detail', 'director', 'genres'] }),
           this.movieRepository.count(),
         ]),
       };
@@ -36,7 +36,7 @@ export class MovieService {
     return {
       type: 'include title',
       result: await this.movieRepository.findAndCount({
-        relations: ['detail', 'director'],
+        relations: ['detail', 'director', 'genres'],
         where: { title: Like(`%${title}%`) },
       }),
     };
@@ -45,7 +45,7 @@ export class MovieService {
   async findOne(id: number) {
     const movie = await this.movieRepository.findOne({
       where: { id },
-      relations: ['detail', 'director'],
+      relations: ['detail', 'director', 'genres'],
     });
 
     if (!movie) {
@@ -88,7 +88,7 @@ export class MovieService {
     const movie = await this.findOne(id);
     const { detail, genreIds, directorId, ...rest } = dto;
 
-    let newGenre: Genre[] | null = null;
+    let newGenres: Genre[] | null = null;
     let newDirector: Director | null = null;
 
     if (genreIds && genreIds.length) {
@@ -100,9 +100,9 @@ export class MovieService {
         throw new NotFoundException(`존재하지 않는 장르가 있습니다! ids => ${genreIds.map((id) => id).join(', ')}`);
       }
 
-      newGenre = genres;
+      newGenres = genres;
     }
-    1;
+
     if (directorId) {
       const director = await this.directorRepository.findOne({
         where: { id: directorId },
@@ -117,7 +117,6 @@ export class MovieService {
 
     const movieUpdateFields = {
       ...rest,
-      ...(newGenre && { genre: newGenre }),
       ...(newDirector && { director: newDirector }),
     };
 
@@ -132,7 +131,15 @@ export class MovieService {
       relations: ['detail', 'director'],
     });
 
-    return newMovie;
+    if (newMovie && newGenres) {
+      newMovie.genres = newGenres;
+      await this.movieRepository.save(newMovie);
+    }
+
+    return this.movieRepository.findOne({
+      where: { id },
+      relations: ['detail', 'director', 'genres'],
+    });
   }
 
   async remove(id: number) {
