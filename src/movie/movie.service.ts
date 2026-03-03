@@ -3,9 +3,10 @@ import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { Movie } from './entity/movie.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository, Like, Not, In } from 'typeorm';
 import { MovieDetail } from './entity/movie-detail.entity';
 import { Director } from 'src/director/entity/director.entity';
+import { Genre } from 'src/genre/entities/genre.entity';
 
 @Injectable()
 export class MovieService {
@@ -14,6 +15,8 @@ export class MovieService {
     private readonly movieRepository: Repository<Movie>,
     @InjectRepository(MovieDetail)
     private readonly movieDetailRepository: Repository<MovieDetail>,
+    @InjectRepository(Genre)
+    private readonly genreRepository: Repository<Genre>,
     @InjectRepository(Director)
     private readonly directorRepository: Repository<Director>,
   ) {}
@@ -53,7 +56,15 @@ export class MovieService {
   }
 
   async create(dto: CreateMovieDto) {
-    const { detail, directorId, ...rest } = dto;
+    const { detail, genreIds, directorId, ...rest } = dto;
+
+    const genres = await this.genreRepository.find({
+      where: { id: In(genreIds) },
+    });
+
+    if (genres.length !== genreIds.length) {
+      throw new NotFoundException(`존재하지 않는 장르가 있습니다! ids => ${genreIds.map((id) => id).join(', ')}`);
+    }
 
     const director = await this.directorRepository.findOne({
       where: { id: directorId },
@@ -67,6 +78,7 @@ export class MovieService {
       ...rest,
       detail: { text: detail },
       director,
+      genres,
     });
 
     return movie;
@@ -74,10 +86,23 @@ export class MovieService {
 
   async update(id: number, dto: UpdateMovieDto) {
     const movie = await this.findOne(id);
-    const { detail, directorId, ...rest } = dto;
+    const { detail, genreIds, directorId, ...rest } = dto;
 
+    let newGenre: Genre[] | null = null;
     let newDirector: Director | null = null;
 
+    if (genreIds && genreIds.length) {
+      const genres = await this.genreRepository.find({
+        where: { id: In(genreIds) },
+      });
+
+      if (genres.length !== genreIds.length) {
+        throw new NotFoundException(`존재하지 않는 장르가 있습니다! ids => ${genreIds.map((id) => id).join(', ')}`);
+      }
+
+      newGenre = genres;
+    }
+    1;
     if (directorId) {
       const director = await this.directorRepository.findOne({
         where: { id: directorId },
@@ -92,16 +117,14 @@ export class MovieService {
 
     const movieUpdateFields = {
       ...rest,
+      ...(newGenre && { genre: newGenre }),
       ...(newDirector && { director: newDirector }),
     };
 
     await this.movieRepository.update({ id }, movieUpdateFields);
 
     if (detail) {
-      await this.movieDetailRepository.update(
-        { id: movie.detail.id },
-        { text: detail },
-      );
+      await this.movieDetailRepository.update({ id: movie.detail.id }, { text: detail });
     }
 
     const newMovie = await this.movieRepository.findOne({
