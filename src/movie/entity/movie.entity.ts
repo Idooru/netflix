@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToMany,
   ManyToOne,
@@ -25,13 +26,13 @@ export class Movie extends BaseTable {
   title: string;
 
   @ManyToMany(() => Genre, (genre) => genre.movies, { nullable: false })
-  @JoinTable()
+  @JoinTable({ name: 'movie_genre_jointable' })
   genres: Genre[];
 
   @OneToOne(() => MovieDetail, (detail) => detail.movie, {
     cascade: true,
-    nullable: false,
   })
+  @JoinColumn()
   detail: MovieDetail;
 
   @ManyToOne(() => Director, (director) => director.id, {
