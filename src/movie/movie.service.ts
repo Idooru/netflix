@@ -142,97 +142,114 @@ export class MovieService {
   async update(id: number, dto: UpdateMovieDto) {
     const movie = await this.findOne(id);
     const { detail, genreIds, directorId, ...rest } = dto;
+    const qr = this.dataSource.createQueryRunner();
 
-    let newGenres: Genre[] | null = null;
-    let newDirector: Director | null = null;
+    // Transaction Start
+    await qr.connect();
+    await qr.startTransaction();
 
-    if (genreIds && genreIds.length) {
-      const genres = await this.genreRepository.find({
-        where: { id: In(genreIds) },
-      });
+    try {
+      let newGenres: Genre[] | null = null;
+      let newDirector: Director | null = null;
 
-      if (genres.length !== genreIds.length) {
-        throw new NotFoundException(`존재하지 않는 장르가 있습니다! ids => ${genreIds.map((id) => id).join(', ')}`);
+      if (genreIds && genreIds.length) {
+        const genres = await qr.manager.find(Genre, {
+          where: { id: In(genreIds) },
+        });
+
+        if (genres.length !== genreIds.length) {
+          throw new NotFoundException(`존재하지 않는 장르가 있습니다! ids => ${genreIds.map((id) => id).join(', ')}`);
+        }
+
+        newGenres = genres;
       }
 
-      newGenres = genres;
-    }
+      if (directorId) {
+        const director = await qr.manager.findOne(Director, {
+          where: { id: directorId },
+        });
 
-    if (directorId) {
-      const director = await this.directorRepository.findOne({
-        where: { id: directorId },
-      });
+        if (!director) {
+          throw new NotFoundException('존재하지 않는 ID의 감독입니다!');
+        }
 
-      if (!director) {
-        throw new NotFoundException('존재하지 않는 ID의 감독입니다!');
+        newDirector = director;
       }
 
-      newDirector = director;
+      const movieUpdateFields = {
+        ...rest,
+        ...(newDirector && { director: newDirector }),
+      };
+
+      await qr.manager.createQueryBuilder().update(Movie).set(movieUpdateFields).where('id = :id', { id }).execute();
+
+      if (detail) {
+        await qr.manager
+          .createQueryBuilder()
+          .update(MovieDetail)
+          .set({ text: detail })
+          .where('id = :id', { id: movie.detail.id })
+          .execute();
+      }
+
+      if (newGenres) {
+        await qr.manager
+          .createQueryBuilder()
+          .relation(Movie, 'genres')
+          .of(id)
+          .addAndRemove(
+            newGenres.map((genre) => genre.id),
+            movie.genres.map((genre) => genre.id),
+          );
+      }
+
+      // if (newMovie && newGenres) {
+      //   newMovie.genres = newGenres;
+      //   await this.movieRepository.save(newMovie);
+      // }
+
+      // Transaction Success
+      await qr.commitTransaction();
+
+      return this.movieRepository.findOne({
+        where: { id },
+        relations: ['detail', 'director', 'genres'],
+      });
+    } catch (err) {
+      // Transaction Fail
+      await qr.rollbackTransaction();
+      throw err;
+    } finally {
+      // Transaction Cleanup
+      await qr.release();
     }
-
-    const movieUpdateFields = {
-      ...rest,
-      ...(newDirector && { director: newDirector }),
-    };
-
-    await this.movieRepository
-      .createQueryBuilder()
-      .update(Movie)
-      .set(movieUpdateFields)
-      .where('id = :id', { id })
-      .execute();
-
-    if (detail) {
-      await this.movieDetailRepository
-        .createQueryBuilder()
-        .update(MovieDetail)
-        .set({ text: detail })
-        .where('id = :id', { id: movie.detail.id })
-        .execute();
-    }
-
-    if (newGenres) {
-      await this.movieRepository
-        .createQueryBuilder()
-        .relation(Movie, 'genres')
-        .of(id)
-        .addAndRemove(
-          newGenres.map((genre) => genre.id),
-          movie.genres.map((genre) => genre.id),
-        );
-    }
-
-    // if (newMovie && newGenres) {
-    //   newMovie.genres = newGenres;
-    //   await this.movieRepository.save(newMovie);
-    // }
-
-    return this.movieRepository.findOne({
-      where: { id },
-      relations: ['detail', 'director', 'genres'],
-    });
   }
 
   async remove(id: number) {
     const movie = await this.findOne(id);
+    const qr = this.dataSource.createQueryRunner();
 
-    await Promise.all([
-      this.movieRepository
-        .createQueryBuilder()
-        .delete()
-        .from(Movie)
-        .where('id = :id', {
-          id,
-        })
-        .execute(),
-      this.movieDetailRepository
-        .createQueryBuilder()
-        .delete()
-        .from(MovieDetail)
-        .where('id = :id', { id: movie.detail.id })
-        .execute(),
-    ]);
+    // Transaction Start
+    qr.connect();
+    qr.startTransaction();
 
-    return id;
+    try {
+      await Promise.all([
+        qr.manager.createQueryBuilder().delete().from(Movie).where('id = :id', { id }).execute(),
+        qr.manager.createQueryBuilder().delete().from(MovieDetail).where('id = :id', { id: movie.detail.id }).execute(),
+      ]);
+
+      // Transaction Success
+      qr.commitTransaction();
+
+      return id;
+    } catch (err) {
+      // Transaction Fail
+      qr.rollbackTransaction();
+      throw err;
+    } finally {
+      // Transaction Cleanup
+      qr.release();
+    }
   }
 }
