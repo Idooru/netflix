@@ -6,12 +6,16 @@ import {
   Patch,
   Param,
   Delete,
+  UseInterceptors,
+  ClassSerializerInterceptor,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { DirectorService } from './director.service';
 import { CreateDirectorDto } from './dto/create-director.dto';
 import { UpdateDirectorDto } from './dto/update-director.dto';
 
 @Controller('director')
+@UseInterceptors(ClassSerializerInterceptor)
 export class DirectorController {
   constructor(private readonly directorService: DirectorService) {}
 
@@ -21,8 +25,8 @@ export class DirectorController {
   }
 
   @Get(':id')
-  getDirector(@Param('id') id: string) {
-    return this.directorService.findOne(+id);
+  getDirector(@Param('id', ParseIntPipe) id: number) {
+    return this.directorService.findOne(id);
   }
 
   @Post()
@@ -31,12 +35,12 @@ export class DirectorController {
   }
 
   @Patch(':id')
-  patchDirector(@Param('id') id: string, @Body() body: UpdateDirectorDto) {
-    return this.directorService.update(+id, body);
+  patchDirector(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateDirectorDto) {
+    return this.directorService.update(id, body);
   }
 
   @Delete(':id')
-  deleteDirector(@Param('id') id: string) {
-    return this.directorService.remove(+id);
+  deleteDirector(@Param('id', ParseIntPipe) id: number) {
+    return this.directorService.remove(id);
   }
 }
