@@ -13,12 +13,6 @@ export class MovieService {
   constructor(
     @InjectRepository(Movie)
     private readonly movieRepository: Repository<Movie>,
-    @InjectRepository(MovieDetail)
-    private readonly movieDetailRepository: Repository<MovieDetail>,
-    @InjectRepository(Genre)
-    private readonly genreRepository: Repository<Genre>,
-    @InjectRepository(Director)
-    private readonly directorRepository: Repository<Director>,
     private readonly dataSource: DataSource,
   ) {}
 
