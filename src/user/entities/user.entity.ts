@@ -3,9 +3,9 @@ import { BaseTable } from '../../common/entity/base-table.entity';
 import { Exclude } from 'class-transformer';
 
 export enum Role {
-  admin,
-  paidUser,
-  user,
+  ADMIN = 'admin',
+  PAID_USER = 'paidUser',
+  USER = 'user',
 }
 
 @Entity()
@@ -20,6 +20,6 @@ export class User extends BaseTable {
   @Exclude({ toClassOnly: true, toPlainOnly: true })
   password: string;
 
-  @Column({ enum: Role, default: Role.user })
+  @Column({ type: 'enum', enum: Role, default: Role.USER })
   role: Role;
 }
