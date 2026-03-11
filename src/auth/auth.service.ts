@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Role, User } from '../user/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { envVariables } from '../common/const/env.const';
 
 @Injectable()
 export class AuthService {
@@ -56,9 +57,13 @@ export class AuthService {
       throw new BadRequestException('토큰 포맷이 잘못되었습니다!');
     }
 
-    const payload = await this.jwtService.verifyAsync(token, {
-      secret: this.configService.getOrThrow<string>('REFRESH_TOKEN_SECRET'),
-    });
+    const payload = await this.jwtService
+      .verifyAsync(token, {
+        secret: this.configService.getOrThrow<string>(envVariables.refreshTokenSecret),
+      })
+      .catch((e) => {
+        throw new UnauthorizedException('토큰이 만료되었습니다!');
+      });
 
     if (isRefreshToken) {
       if (payload.type !== 'refresh') {
@@ -83,7 +88,7 @@ export class AuthService {
       throw new BadRequestException('이미 가입한 이메일입니다!');
     }
 
-    const hashRoundes = this.configService.get<number>('HASH_ROUNDES') as number;
+    const hashRoundes = this.configService.get<number>(envVariables.hashRoundes) as number;
     const hash = await bcrypt.hash(password, hashRoundes);
 
     await this.userRepository.save({ email, password: hash });
@@ -108,8 +113,8 @@ export class AuthService {
   }
 
   public issueToken(user: { id: number; role: Role }, isRefreshToken: boolean): Promise<string> {
-    const refreshTokenSecret = this.configService.get<string>('REFRESH_TOKEN_SECRET');
-    const accessTokenSecret = this.configService.get<string>('ACCESS_TOKEN_SECRET');
+    const refreshTokenSecret = this.configService.get<string>(envVariables.refreshTokenSecret);
+    const accessTokenSecret = this.configService.get<string>(envVariables.accessTokenSecret);
 
     return this.jwtService.signAsync(
       { sub: user.id, role: user.role, type: isRefreshToken ? 'refresh' : 'access' },
