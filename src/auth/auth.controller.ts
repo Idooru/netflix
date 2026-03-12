@@ -32,6 +32,7 @@ export class AuthController {
     return this.authService.login(token);
   }
 
+  @Public()
   @Post('/token/access')
   async rotateAccessToken(@Request() req: RequestType) {
     const payload = req.user as { id: number; role: Role };
