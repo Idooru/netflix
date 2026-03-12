@@ -13,18 +13,20 @@ import { LocalAuthGuard } from './strategy/local.strategy';
 import { JwtAuthGuard } from './strategy/jwt.strategy';
 import { Request as RequestType } from 'express';
 import { Role } from '../user/entities/user.entity';
+import { Public } from './decorator/public.decorator';
 
 @Controller('auth')
 @UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('/register')
-  /// authorization: Basic $token
   registerUser(@Headers('authorization') token: string) {
     return this.authService.register(token);
   }
 
+  @Public()
   @Post('/login')
   loginUser(@Headers('authorization') token: string) {
     return this.authService.login(token);
