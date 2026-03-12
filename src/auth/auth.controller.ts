@@ -11,6 +11,8 @@ import {
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './strategy/local.strategy';
 import { JwtAuthGuard } from './strategy/jwt.strategy';
+import { Request as RequestType } from 'express';
+import { Role } from '../user/entities/user.entity';
 
 @Controller('auth')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -29,8 +31,8 @@ export class AuthController {
   }
 
   @Post('/token/access')
-  async rotateAccessToken(@Headers('authorization') token: string) {
-    const payload = await this.authService.parseBearerToken(token, true);
+  async rotateAccessToken(@Request() req: RequestType) {
+    const payload = req.user as { id: number; role: Role };
 
     return {
       accessToken: await this.authService.issueToken(payload, false),
@@ -39,17 +41,18 @@ export class AuthController {
 
   @Post('/login/passport')
   @UseGuards(LocalAuthGuard)
-  async loginUserPassport(@Request() req) {
+  async loginUserPassport(@Request() req: RequestType) {
+    const payload = req.user as { id: number; role: Role };
+
     return {
-      refreshToken: await this.authService.issueToken(req.user, true),
-      accessToken: await this.authService.issueToken(req.user, false),
+      refreshToken: await this.authService.issueToken(payload, true),
+      accessToken: await this.authService.issueToken(payload, false),
     };
   }
 
   @Get('/private')
   @UseGuards(JwtAuthGuard)
-  async private(@Request() req) {
-    console.log('ru');
+  private(@Request() req: RequestType) {
     return req.user;
   }
 }
