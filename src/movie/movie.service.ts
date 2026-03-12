@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { Movie } from './entity/movie.entity';
@@ -78,6 +78,11 @@ export class MovieService {
   async create(dto: CreateMovieDto) {
     const { title, detail, genreIds, directorId } = dto;
     const qr = this.dataSource.createQueryRunner();
+
+    const movie = await this.movieRepository.findOne({ where: { title } });
+    if (movie) {
+      throw new BadRequestException('이미 존재하는 영화입니다!');
+    }
 
     // Transaction Start
     await qr.connect();
