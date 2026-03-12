@@ -25,29 +25,35 @@ export class BearerTokenMiddleware implements NestMiddleware {
     return token;
   }
 
+  private decode(token: string) {
+    const decodedPayload = this.jwtService.decode(token);
+
+    if (!decodedPayload || (decodedPayload.type !== 'refresh' && decodedPayload.type !== 'access')) {
+      throw new UnauthorizedException('잘못된 토큰입니다!');
+    }
+
+    return decodedPayload;
+  }
+
   public async use(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers['authorization'];
     if (!authHeader) return next();
 
-    const token = this.validateTokenFormat(authHeader);
-    const decodedPayload = this.jwtService.decode(token);
+    try {
+      const token = this.validateTokenFormat(authHeader);
+      const decodedPayload = this.decode(token);
 
-    if (decodedPayload.type !== 'refresh' && decodedPayload.type !== 'access') {
-      throw new UnauthorizedException('잘못된 토큰입니다!');
-    }
+      const isRefreshToken = decodedPayload.type === 'refresh';
+      const secretKey = isRefreshToken ? envVariables.refreshTokenSecret : envVariables.accessTokenSecret;
 
-    const isRefreshToken = decodedPayload.type === 'refresh';
-    const secretKey = isRefreshToken ? envVariables.refreshTokenSecret : envVariables.accessTokenSecret;
-
-    const payload = await this.jwtService
-      .verifyAsync(token, {
+      const payload = await this.jwtService.verifyAsync(token, {
         secret: this.configService.getOrThrow<string>(secretKey),
-      })
-      .catch((e) => {
-        throw new UnauthorizedException('토큰이 만료되었습니다!');
       });
 
-    req.user = payload;
-    next();
+      req.user = payload;
+      next();
+    } catch (e) {
+      next();
+    }
   }
 }
